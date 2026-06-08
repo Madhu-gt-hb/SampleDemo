@@ -1,21 +1,34 @@
 pipeline {
     agent any
 
+    environment {
+        AWS_REGION = "ap-south-2"
+        CLUSTER_NAME = "EKS-1"
+        NAMESPACE = "webapps"
+    }
+
     stages {
-        stage('Deploy To Kubernetes') {
+
+        stage('Configure kubeconfig') {
             steps {
-                withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'EKS-1', contextName: '', credentialsId: 'k8-token', namespace: 'webapps', serverUrl: 'https://209FB45B3553612D7C09B0BBEDCE537C.yl4.ap-south-2.eks.amazonaws.com']]) {
-                    sh "kubectl apply -f deployment-service.yml"
-                    
-                }
+                sh """
+                aws eks update-kubeconfig \
+                    --region $AWS_REGION \
+                    --name $CLUSTER_NAME
+                """
             }
         }
-        
-        stage('verify Deployment') {
+
+        stage('Deploy To Kubernetes') {
             steps {
-                withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'EKS-1', contextName: '', credentialsId: 'k8-token', namespace: 'webapps', serverUrl: 'https://209FB45B3553612D7C09B0BBEDCE537C.yl4.ap-south-2.eks.amazonaws.com']]) {
-                    sh "kubectl get svc -n webapps"
-                }
+                sh "kubectl apply -f deployment-service.yml -n $NAMESPACE"
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh "kubectl get svc -n $NAMESPACE"
+                sh "kubectl get pods -n $NAMESPACE"
             }
         }
     }
