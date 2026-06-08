@@ -15,13 +15,13 @@ pipeline {
                     string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
                     string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
                     ) {
-                sh """
-                aws eks update-kubeconfig \
-                    --region $AWS_REGION \
-                    --name $CLUSTER_NAME
-                """
-            }
-        }
+                        sh """
+                        aws eks update-kubeconfig \
+                        --region $AWS_REGION \
+                        --name $CLUSTER_NAME
+                        """
+                    }
+                    }
 
         stage('Deploy To Kubernetes') {
             steps {
