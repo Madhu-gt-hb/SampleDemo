@@ -12,13 +12,6 @@ spec:
       labels:
         app: emailservice
     spec:
-      serviceAccountName: default
-      terminationGracePeriodSeconds: 5
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsUser: 1000
-        runAsNonRoot: true
       containers:
       - name: server
         image: kanha05/emailservice:latest
@@ -27,23 +20,14 @@ spec:
         env:
         - name: PORT
           value: "8080"
-        - name: DISABLE_PROFILER
-          value: "1"
         readinessProbe:
           exec:
             command: ["/bin/grpc_health_probe", "-addr=:8080"]
-          periodSeconds: 5
+          initialDelaySeconds: 5
         livenessProbe:
           exec:
             command: ["/bin/grpc_health_probe", "-addr=:8080"]
-          periodSeconds: 5
-        resources:
-          requests:
-            cpu: 100m
-            memory: 64Mi
-          limits:
-            cpu: 200m
-            memory: 128Mi
+          initialDelaySeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -92,11 +76,11 @@ spec:
         readinessProbe:
           exec:
             command: ["/bin/grpc_health_probe", "-addr=:5050"]
-          periodSeconds: 5
+          initialDelaySeconds: 5
         livenessProbe:
           exec:
             command: ["/bin/grpc_health_probe", "-addr=:5050"]
-          periodSeconds: 5
+          initialDelaySeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -135,11 +119,11 @@ spec:
         readinessProbe:
           exec:
             command: ["/bin/grpc_health_probe", "-addr=:8080"]
-          periodSeconds: 5
+          initialDelaySeconds: 5
         livenessProbe:
           exec:
             command: ["/bin/grpc_health_probe", "-addr=:8080"]
-          periodSeconds: 5
+          initialDelaySeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -179,25 +163,112 @@ spec:
           value: "cartservice:7070"
         - name: CHECKOUT_SERVICE_ADDR
           value: "checkoutservice:5050"
+
+        # FIXED PROBES (this was your CrashLoopBackOff issue)
         readinessProbe:
           httpGet:
             path: /
             port: 8080
           initialDelaySeconds: 10
+          periodSeconds: 5
+
         livenessProbe:
           httpGet:
             path: /
             port: 8080
-          initialDelaySeconds: 10
+          initialDelaySeconds: 15
+          periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: frontend
 spec:
+  type: LoadBalancer
   selector:
     app: frontend
   ports:
   - port: 80
     targetPort: 8080
-  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paymentservice
+spec:
+  selector:
+    matchLabels:
+      app: paymentservice
+  template:
+    metadata:
+      labels:
+        app: paymentservice
+    spec:
+      containers:
+      - name: server
+        image: kanha05/paymentservice:latest
+        ports:
+        - containerPort: 50051
+        env:
+        - name: PORT
+          value: "50051"
+        readinessProbe:
+          exec:
+            command: ["/bin/grpc_health_probe", "-addr=:50051"]
+          initialDelaySeconds: 5
+        livenessProbe:
+          exec:
+            command: ["/bin/grpc_health_probe", "-addr=:50051"]
+          initialDelaySeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paymentservice
+spec:
+  selector:
+    app: paymentservice
+  ports:
+  - port: 50051
+    targetPort: 50051
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: productcatalogservice
+spec:
+  selector:
+    matchLabels:
+      app: productcatalogservice
+  template:
+    metadata:
+      labels:
+        app: productcatalogservice
+    spec:
+      containers:
+      - name: server
+        image: kanha05/productcatalogservice:latest
+        ports:
+        - containerPort: 3550
+        env:
+        - name: PORT
+          value: "3550"
+        readinessProbe:
+          exec:
+            command: ["/bin/grpc_health_probe", "-addr=:3550"]
+          initialDelaySeconds: 5
+        livenessProbe:
+          exec:
+            command: ["/bin/grpc_health_probe", "-addr=:3550"]
+          initialDelaySeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: productcatalogservice
+spec:
+  selector:
+    app: productcatalogservice
+  ports:
+  - port: 3550
+    targetPort: 3550
