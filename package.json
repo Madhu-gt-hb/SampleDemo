@@ -9,7 +9,7 @@
     "build": "tsc && webpack --mode production",
     "clean": "rimraf dist build coverage",
     "test": "jest --coverage",
-    "lint": "eslint . --ext .js,.ts",
+    "lint": "eslint src --ext .js,.ts,.jsx,.tsx",
     "lint:fix": "eslint . --ext .js,.ts --fix",
     "format": "prettier --write \"src/**/*.{js,ts,json,md}\"",
     "type-check": "tsc --noEmit"
