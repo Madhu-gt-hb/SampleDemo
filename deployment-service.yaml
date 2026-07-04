@@ -202,7 +202,7 @@ spec:
         - name: server
           image: kanha05/frontend:latest
           ports:
-          - containerPort: 8080
+          - containerPort: 80
           readinessProbe:
             initialDelaySeconds: 10
             httpGet:
