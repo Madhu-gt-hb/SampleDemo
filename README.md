@@ -1,4 +1,4 @@
 # SampleDemoProject
-Added anothet line in first
+Added another line in first
 Thsi is ReadMe file
 
